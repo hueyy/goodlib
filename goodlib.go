@@ -4,7 +4,6 @@ import (
 	"./nlb"
 	"github.com/alexsasharegan/dotenv"
 	"log"
-	"os"
 )
 
 func main() {
@@ -12,8 +11,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
-
-	nlb.Setup(os.Getenv("NLB_API_KEY"))
-
-	nlb.GetAvailability("0062433652")
+	bookTitle := "Kiasunomics©:Stories of Singaporean Economic Behaviours"
+	availability := nlb.GetAvailabilityByTitle(bookTitle)
+	log.Println(availability)
 }
