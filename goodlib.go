@@ -2,8 +2,9 @@ package main
 
 import (
 	// "./nlb"
-	"github.com/KyleBanks/goodreads"
+	"./routes"
 	"github.com/alexsasharegan/dotenv"
+	"github.com/hueyy/go-reads"
 	"github.com/labstack/echo"
 	"log"
 	"net/http"
@@ -35,7 +36,10 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	e.Logger.Fatal(e.Start(":1323"))
+	e.GET("/availability", routes.ShowAvailability)
+	e.GET("/goodreads_authorise", routes.GoodreadsAuthorise)
+	e.GET("/goodreads_callback", routes.GoodreadsCallback)
+	e.Logger.Fatal(e.Start(":" + os.Getenv("PORT")))
 	// getToReadBooks()
 	// bookTitle := "Kiasunomics©:Stories of Singaporean Economic Behaviours"
 	// availability := nlb.GetAvailabilityByTitle(bookTitle)
