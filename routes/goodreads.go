@@ -3,9 +3,7 @@ package routes
 import (
 	"../goodreads"
 	"github.com/labstack/echo"
-	"log"
 	"net/http"
-	"net/url"
 	"os"
 )
 
@@ -13,16 +11,13 @@ import (
 func GoodreadsAuthorise(c echo.Context) error {
 	apiKey := os.Getenv("GOODREADS_API_KEY")
 	apiSecret := os.Getenv("GOODREADS_API_SECRET")
-	callback := os.Getenv("GOODREADS_CALLBACK")
+	callback := os.Getenv("BASE_URL") + "/goodreads_callback"
 
-	oauthClient := goodreads.NewClient(apiKey, apiSecret)
-	tempCred, err := oauthClient.RequestTemporaryCredentials(nil, "https://bbb2f57b.ngrok.io/goodreads_callback", nil)
+	redirectURL, err := goodreads.GetAuthenticationURL(apiKey, apiSecret, callback)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "Error requesting token "+err.Error())
+		return c.String(http.StatusBadRequest, "Error requesting temporary credentials "+err.Error())
 	}
-	log.Println(tempCred)
 
-	redirectURL := oauthClient.AuthorizationURL(tempCred, url.Values{"oauth_callback": {callback}})
 	return c.Redirect(http.StatusFound, redirectURL)
 }
 
@@ -31,16 +26,16 @@ func GoodreadsCallback(c echo.Context) error {
 	oauthToken := c.QueryParam("oauth_token")
 	isAuthorised := c.QueryParam("authorize")
 
-	log.Println(c.Request())
-
 	if isAuthorised != "1" {
 		return c.String(http.StatusUnauthorized, "Must allow goodlib to access Goodreads data")
 	}
 
-	availabilityURL, _ := url.Parse(c.Scheme() + "://" + c.Request().Host + "/availability")
+	token, err := goodreads.GetTokenCredentials(oauthToken)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Error requesting token")
+	}
 
-	q := availabilityURL.Query()
-	q.Set("oauth_token", oauthToken)
+	availabilityURL := c.Scheme() + "://" + c.Request().Host + "/availability?token=" + token
 
-	return c.Redirect(http.StatusFound, availabilityURL.String())
+	return c.Redirect(http.StatusFound, availabilityURL)
 }
